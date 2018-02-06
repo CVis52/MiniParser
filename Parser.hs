@@ -148,27 +148,52 @@ data PSemicolon = PSEMICOLON
         deriving (Show, Eq)
 
 
---discardNext target (t:ts) = 
--- Tokens with extra content: TID TNUM
 prog :: [Token] -> Either [Char] ([Token], Prog)
-prog ts = prog ts
+prog ts = case stmt ts of
+    Right (ts, stm) -> case ts of
+        [] -> Right (ts, R1 stm)
+        otherwise  -> Left $ "Tokens remain: " ++ (show ts)
 
 stmt :: [Token] -> Either [Char] ([Token], Stmt)
-stmt = stmt
+stmt (t:ts) = case t of
+    TIF p -> stmt ts
+    TWHILE p -> stmt ts
+    TINPUT p -> case ts of
+        ((TID v p):ts') -> Right (ts', R4 PINPUT (PID v))
+        _ -> Left "Invalid pattern R4: ID not found"
+    TID v p -> case ts of
+        ((TASSIGN p):ts') -> case expr ts' of
+            Right (ts'', exp) -> Right (ts'', R5 (PID v) PASSIGN exp)
+            Left msg -> Left $ "Invalid match R5: " ++ msg
+        _ -> Left "Invalid match R5: Assign not found"
+    TWRITE p -> case expr ts of
+        Right (ts', exp) -> Right (ts', R6 PWRITE exp)
+        Left msg -> Left $ "Invalid pattern R6: " ++ msg
+    TBEGIN p -> case stmtlist ts of
+        Right (ts', smtls) -> case ts' of
+            ((TEND p):ts'') -> Right (ts'', R7 PBEGIN smtls PEND)
+            _ -> Left "Invalid pattern R7: end not found"
+        Left msg -> Left $ "Invalid pattern R7: " ++ msg
+
+ifelse :: [Token] -> ([Token], Else)
+ifelse ts = ifelse ts
+
+ifthen :: [Token] -> ([Token], Then)
+ifthen ts = ifthen ts
+
 
 addop :: [Token] -> Either [Char] ([Token], Addop)
 addop (t:ts) = case t of
         TADD p  -> Right (ts, R8 PADD)
         TSUB p  -> Right (ts, R9 PSUB)
-        _       -> error "Invalid Pattern Addop"
+        _       -> Left "Invalid Pattern Addop"
 
 mulop :: [Token] -> Either [Char] ([Token], Mulop)
 mulop (t:ts) = case t of
         TMUL p  -> Right (ts, R10 PMUL)
         TDIV p  -> Right (ts, R11 PDIV)
-        _       -> error "Invalid Pattern Mulop"
+        _       -> Left "Invalid Pattern Mulop"
 
---Right (\(ts',pt) -> ((cloPar ts'), R12 PLAR pt PRPAR)) $ expr ts
 factor :: [Token] -> Either [Char] ([Token], Factor)
 factor (t:ts) = case t of
     TLPAR p -> case expr ts of
@@ -181,60 +206,46 @@ factor (t:ts) = case t of
     TSUB p      -> case (\(t':ts') -> (t', ts')) ts of
                     (TNUM n p, ts') -> Right (ts', R15 PSUB (PNUM n))
                     _        -> Left "Invalid Pattern  "
-
---    TSUB p      -> (\(n, ts') -> Right (ts', R15 PSUB (PNUM n))) $ getNum ts
-    _           -> Left ("Invalid Pattern Factor")--error "Invalid Pattern Factor"
+    _           -> Left ("Invalid Pattern Factor")
         where
-            cloPar :: [Token] -> [Token]
+            cloPar :: [Token] -> Either String [Token]
             cloPar (t:ts) = case t of
-                    TRPAR p -> ts
-                    _       -> error "Invalid Pattern cloPar"
+                    TRPAR p -> Right ts
+                    _       -> Left "Invalid Pattern cloPar"
 
-getNum :: [Token] -> (Int, [Token])
-getNum (t:ts) = case t of
-    TNUM n p -> (n, ts)
-    _        -> error "Invalid Pattern getNum"
 
 stmtlist :: [Token] -> Either [Char] ([Token], Stmtlist)
-stmtlist = stmtlist
+stmtlist ts = case stmtlist' ts of
+    Right (ts', stls) -> Right (ts', R16 stls)
+    Left msg -> Left msg
 
 stmtlist' :: [Token] -> Either [Char] ([Token], Stmtlist')
-stmtlist' = stmtlist'
+stmtlist' ts = case stmt ts of
+    Right ((t:ts'), smt) -> case t of
+        TSEMICOLON p -> case stmtlist' ts' of
+            Right (ts'', smtls') -> Right (ts'', R17 smt PSEMICOLON smtls')
+            Left msg -> Right (ts, R18)
+        _ -> Right (ts, R18)
+    Left msg -> Right (ts, R18)
 
-{-
-expr ts = Right (ts'', R19 trm exp)
-    where 
-        Right (ts', exp) = expr' ts
-        Right (ts'', trm) = term ts'
--}
 expr :: [Token] -> Either [Char] ([Token], Expr)
 expr ts = case expr' ts of
     Right (ts', exp) -> case term ts' of
         Right (ts'', trm) -> Right (ts'', R19 trm exp)
         Left msg -> Left msg
     Left msg -> Left msg
-{-
-expr' ts = Right (ts''', R20 adp trm exp')
-    where
-        Right (ts', adp) = addop ts
-        Right (ts'', trm) = term ts'
-        Right (ts''', exp') = expr' ts''
--}
+
+
 expr' :: [Token] -> Either [Char] ([Token], Expr')
 expr' ts = case addop ts of
     Right (ts', adp) -> case term ts' of
         Right (ts'', trm) -> case expr' ts'' of
             Right (ts''', exp') -> Right (ts''', R20 adp trm exp')
-            Left msg -> Left msg
-        Left msg -> Left msg
-    Left msg -> Left msg
+            Left msg -> Right (ts, R21)
+        Left msg -> Right (ts, R21)
+    Left msg -> Right (ts, R21)
 
-{-
-term ts = Right (ts'', R22 fct trm')
-    where
-        Right (ts', fct) = factor ts
-        Right (ts'', trm') = term' ts'
--}
+
 term :: [Token] -> Either [Char] ([Token], Term)
 term ts = case factor ts of
     Right (ts', fct) -> case term' ts' of
@@ -242,21 +253,14 @@ term ts = case factor ts of
         Left msg -> Left msg
     Left msg -> Left msg
 
-{-
-term' ts = Right (ts''', R23 mulp fct trm')
-    where
-        Right (ts', mulp) = mulop ts
-        Right (ts'', fct) = factor ts'
-        Right (ts''', trm') = term' ts''
--}
 term' :: [Token] -> Either [Char] ([Token], Term')
 term' ts = case mulop ts of
     Right (ts', mulp) -> case factor ts' of
         Right (ts'', fct) -> case term' ts'' of
             Right (ts''', trm') -> Right (ts''', R23 mulp fct trm')
-            Left msg -> Left msg
-        Left msg -> Left msg
-    Left msg -> Left msg
+            Left msg -> Right (ts, R24)
+        Left msg -> Right (ts, R24)
+    Left msg -> Right (ts, R24)
 
 
 
@@ -264,54 +268,6 @@ term' ts = case mulop ts of
 
 
 
-{-
-prog :: [Token] -> Maybe ([Token], Prog)
-prog ts =  (\(ts', pt) -> (ts', (R1 pt))) $ stmt ts
-
-stmt :: [Token] -> Maybe ([Token], Stmt)
-stmt (t:ts) = case t of
---    (TIF p)    ->  
---    (TWHILE p) -> 
-    TINPUT p  ->  (\(t':ts') -> case t' of
-                        TID var p   -> (ts', R4 PINPUT $ PID var)
-                        otherwise   ->  error "Invalid Pattern R4") ts
-    TID var p ->  (\(ts', pt) -> (ts', R5 (PID var) PASSIGN pt)) 
-                  expr $ (\(t':ts'') -> case t' of
-                        TASSIGN p   -> ts''
-                        otherwise   -> error "Invalid Pattern R5") ts
---    (TWRITE p) -> 
---    BEGIN ->
-
-addop :: [Token] -> ([Token], Addop)
-addop (t:ts) = case t of
-        TADD p  -> (ts, R8 PADD)
-        TSUB p  -> (ts, R9 PSUB)
-        _       -> error "Invalid Pattern Addop"
-
-mulop :: [Token] -> ([Token], Mulop)
-mulop (t:ts) = case t of
-        TMUL p  -> (ts, R10 PMUL)
-        TDIV p  -> (ts, R11 PDIV)
-        _       -> error "Invalid Pattern Mulop"
-
-stmtlist :: [Token] -> ([Token], Stmtlist)
-stmtlist ts = (\(ts', pt) -> (ts', R16 pt)) $ stmtlist' ts
-
-stmtlist' :: [Token] -> ([Token], Stmtlist')
-stmtlist' ts = (\((t':ts'),pt) -> case t' of
-            TSEMICOLON -> (\(ts'', pt') -> (ts'', R17 pt PSC pt' )) $ stmtlist' ts'
-            
- ) $ stmt ts
-
-expr :: [Token] -> ([Token], Expr)
-expr (t:ts) = (
-
-term :: [Token] -> ([Token], Term)
-term ts = (\(ts', pt) ->  (\(ts'',pt') -> (ts'', R22 pt pt')) term' ts') $ factor ts
-
-term' :: [Token] -> ([Token], Term')
-term' ts = (ts, R24)
--}
 main = do
     file <- getArgs
     s <-readFile (file !! 0)
@@ -320,29 +276,5 @@ main = do
         Right ts -> print $ factor ts
         Left str -> error str
 
-
-
-{-
-main :: IO ()
-main = do
-    args <- getArgs
-    case (length args) of
-        0 -> do
-            isFile <- doesFileExist (args !! -1)
-            case isFile of
-                True -> do
-                    content <- readFile (args !! -1)
-                    pPrint $ lexer content
-                False -> error "Error! File not found."
-        1 -> case (args !! 0) of
-                "-l" -> do
-                    isFile <- doesFileExist (args !! 0)
-                    case isFile of
-                        True -> do
-                            content <- readFile (args !! 0)
-                            print $ lexer content
-                        False -> error "Error! File not found."
-        otherwise -> error "Error! Invalid use. expected either the argument(s) \"./Lexer <filename>\" for pretty printed output, or \"./Lexer -l <filename>\" for the token list as output. "
- -}
 
 test0 = lexer "input x"
