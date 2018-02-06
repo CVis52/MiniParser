@@ -13,46 +13,59 @@ To run individual parsing on a file run:
 
 #### Context Free Grammar
 The original grammar provided by Dr. Cockett for the Minisculus language is neither a LL(1) grammar, nor recursive descent.
-> prog -> stmt.
-> 
-> stmt -> IF expr THEN stmt ELSE stmt
->       | WHILE expr DO stmt
->       | INPUT ID
->       | ID ASSIGN expr
->       | WRITE expr
->       | BEGIN stmtlist END.
->
-> stmtlist -> stmtlist stmt SEMICOLON
->           |.
->
-> expr -> expr addop term
->       | term.
->
-> term -> term mulop factor
->       | factor.
->
-> factor -> LPAR expr RPAR
->         | ID
->         | NUM
->         | SUB NUM.
->
-> addop -> ADD
->        | SUB.
->
-> mulop -> MUL
->        | DIV.
->
+
+
+Non-Terminal | Production
+--- | ---
+ prog -> | stmt.
+` ` | ` ` 
+ stmt -> | IF expr THEN stmt ELSE stmt
+` ` |  \| WHILE expr DO stmt
+` ` |       \| INPUT ID
+` ` |       \| ID ASSIGN expr
+` ` |       \| WRITE expr
+` ` |       \| BEGIN stmtlist END.
+` ` | ` `
+stmtlist -> | stmtlist stmt SEMICOLON
+` ` |           \|.
+` ` | ` `
+ expr -> | expr addop term
+` ` |       \| term.
+` ` | ` `
+ term -> | term mulop factor
+` ` |       \| factor.
+` ` | ` `
+ factor -> | LPAR expr RPAR
+` ` |         \| ID
+` ` |         \| NUM
+` ` |         \| SUB NUM.
+` ` | ` `
+ addop -> | ADD
+` ` |        \| SUB.
+` ` | ` `
+ mulop -> | MUL
+` ` |        \| DIV.
+
 
 
 With the following modifications, we can produce an LL(1) grammar:
-> stmtlist -> stmtlist'.
-> stmtlist' -> stmt SEMICOLON stmtlist'
->            |.
->
-> expr -> term expr'.
-> expr' -> addop term expr'
->        |.
->
-> term -> factor term'.
-> term' -> mulop factor term'
->        |.
+Non-Terminal | Production
+--- | ---
+ stmtlist -> | stmtlist'.
+ stmtlist' -> | stmt SEMICOLON stmtlist'
+         ` ` |   \|.
+` ` | ` `
+ expr -> | term expr'.
+ expr' -> | addop term expr'
+` ` |        \|.
+` ` | ` `
+ term -> | factor term'.
+ term' -> | mulop factor term'
+` ` |        \|.
+
+
+However, this is still not in recursive descent form!
+Again, with the modifications we can change this:
+Non-Terminal | Production
+--- | ---
+
