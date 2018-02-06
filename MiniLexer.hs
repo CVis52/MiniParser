@@ -643,8 +643,27 @@ data Token = TIF AlexPosn
             |TRPAR AlexPosn
             |TSEMICOLON AlexPosn
             |TEOF
-        deriving (Eq)
 
+instance Eq Token where
+    (==) (TIF p) (TIF p') = True
+    (==) (TTHEN p) (TTHEN p') = True
+    (==) (TWHILE p) (TWHILE p') = True
+    (==) (TDO p) (TDO p') = True
+    (==) (TINPUT p) (TINPUT p') = True
+    (==) (TELSE p) (TELSE p') = True
+    (==) (TBEGIN p) (TBEGIN p') = True
+    (==) (TEND p) (TEND p') = True
+    (==) (TWRITE p) (TWRITE p') = True
+    (==) (TID s p) (TID s' p') = True
+    (==) (TNUM n p) (TNUM n' p') = True
+    (==) (TADD p) (TADD p') = True
+    (==) (TASSIGN p) (TASSIGN p') = True
+    (==) (TSUB p) (TSUB p') = True
+    (==) (TMUL p) (TMUL p') = True
+    (==) (TDIV p) (TDIV p') = True
+    (==) (TLPAR p) (TLPAR p') = True
+    (==) (TRPAR p) (TRPAR p') = True
+    (==) (TSEMICOLON p) (TSEMICOLON p') = True
 -----------------------------------------------------------------------------
 -- When showing the user the data, the position of the pattern is irrelevant,
 -- defining our own instance of Show allows us to maintain the information
