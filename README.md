@@ -77,7 +77,7 @@ Then our final grammar looks like:
 Non-Terminal    | Production                |` `| Non-Terminal    | Production
 ---             | ---                     | --- |    ---        | ---
 stmt ->         | IF expr thenpart elsepart |` `| thenpart ->     | THEN stmt.
-` `             | \|WHILE expr do part      |` `| elsepart ->     | ELSE stmt.
+` `             | \|WHILE expr dopart      |` `| elsepart ->     | ELSE stmt.
 ` `             | \|INPUT ID                |` `| dopart ->       | DO stmt.
 ` `             | \|ID ASSIGN expr          |` `| endpart ->      | END.
 ` `             | \|WRITE expr              |` `|` `              |` `
