@@ -3,69 +3,10 @@ module Main (main) where
 
 import MiniLexer
 import System.Environment
-import Data.Data
------------------------------------------------------------------------------
--- Parser for the M- language
------------------------------------------------------------------------------
--- Grammar to be implemented:
------------------------------------------------------------------------------
------------------------------------------------------------------------------
---R1   prog        -> stmt
---
--- **R2   stmt        -> IF expr THEN stmt ELSE stmt
--- **R3                 |WHILE expr DO stmt
---R4                 |INPUT ID
---R5                 |ID ASSIGN expr
---R6                 |WRITE expr
---R7                 |BEGIN stmtlist END.
---
---R2'  then -> THEN stmt else
---R2'' else -> ELSE stmt
---
---R3'  while -> WHILE expr
---R3'' do -> DO stmt
---
---
--- **stmtlist    -> stmtlist stmt SEMICOLON
--- **              |.
---
--- **expr        -> expr addop term
--- **              |term.
---
---R8   addop       -> ADD
---R9                 |SUB.
---
--- **term        -> term mulop factor
--- **              |factor.
---
---R10  mulop       -> MUL
---R11                |DIV.
---
---R12  factor      -> LPAR expr RPAR
---R13                |ID
---R14                |NUM
---R15                |SUB NUM.
---
------------------------------------------------------------------------------
---  With the following modifications, we can produce an LL(1) grammar:
------------------------------------------------------------------------------
---R16  stmtlist     -> stmtlist'
---R17  stmtlist'    -> stmt SEMICOLON stmtlist'
---R18                 |.
---
---R19  expr         -> term expr'.
---R20  expr'        -> addop term expr'
---R21                 |.
---
---R22  term         -> factor term'.
---R23  term'        -> mulop factor term'
---R24                 |.
------------------------------------------------------------------------------
 
 data Prog = R1 Stmt
         deriving (Show, Eq)
---R2 PIf Expr PThen Stmt PElse Stmt
---R3 PWhile Expr PDo Stmt
+
 data Stmt = R2 PIf Expr PThen Stmt PElse Stmt
            |R3 PWhile Expr PDo Stmt
            |R4 PInput PId
