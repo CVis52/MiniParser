@@ -47,7 +47,7 @@ Non-Terminal | Production
 --- | ---
  stmtlist -> | stmtlist'.
  stmtlist' -> | stmt SEMICOLON stmtlist'
-         ` ` |   \|.
+ ` ` | \|.
  expr -> | term expr'.
  expr' -> | addop term expr'
 ` ` |        \|.
@@ -73,6 +73,7 @@ endpart ->      | END.                      |` `|` `            | \|DIV factor t
 ` `             | ` `                       |` `|` `            | \|.
 
 Then our final grammar looks like:
+
 Non-Terminal    | Production                |` `| Non-Terminal    | Production
 ---             | ---                     | --- |    ---        | ---
 stmt ->         | IF expr thenpart elsepart |` `| thenpart ->     | THEN stmt.
