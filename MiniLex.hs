@@ -1,8 +1,8 @@
 {-# OPTIONS_GHC -fno-warn-unused-binds -fno-warn-missing-signatures #-}
 {-# LANGUAGE CPP #-}
-{-# LINE 4 "Lexer.x" #-}
+{-# LINE 4 "MiniLex.x" #-}
 
-module MiniLexer where
+module MiniLex where
 
 import System.Environment
 import System.Directory
@@ -529,7 +529,7 @@ alex_deflt :: Array Int Int
 alex_deflt = listArray (0,68) [-1,-1,-1,-1,9,9,-1,11,11,15,15,18,18,19,19,19,67,67,67,19,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,19]
 
 alex_accept = listArray (0::Int,68) [AlexAccNone,AlexAccNone,AlexAccNone,AlexAccNone,AlexAccNone,AlexAccNone,AlexAccNone,AlexAccNone,AlexAccNone,AlexAccNone,AlexAccNone,AlexAccNone,AlexAccNone,AlexAccNone,AlexAccNone,AlexAccNone,AlexAccNone,AlexAccNone,AlexAccNone,AlexAccNone,AlexAccSkip,AlexAcc (alex_action_1),AlexAccSkip,AlexAcc (alex_action_3),AlexAcc (alex_action_4),AlexAcc (alex_action_5),AlexAcc (alex_action_6),AlexAcc (alex_action_7),AlexAcc (alex_action_8),AlexAcc (alex_action_9),AlexAcc (alex_action_10),AlexAcc (alex_action_11),AlexAcc (alex_action_12),AlexAcc (alex_action_13),AlexAcc (alex_action_14),AlexAcc (alex_action_15),AlexAcc (alex_action_16),AlexAcc (alex_action_17),AlexAcc (alex_action_18),AlexAcc (alex_action_19),AlexAcc (alex_action_20),AlexAcc (alex_action_21),AlexAcc (alex_action_21),AlexAcc (alex_action_21),AlexAcc (alex_action_21),AlexAcc (alex_action_21),AlexAcc (alex_action_21),AlexAcc (alex_action_21),AlexAcc (alex_action_21),AlexAcc (alex_action_21),AlexAcc (alex_action_21),AlexAcc (alex_action_21),AlexAcc (alex_action_21),AlexAcc (alex_action_21),AlexAcc (alex_action_21),AlexAcc (alex_action_21),AlexAcc (alex_action_21),AlexAcc (alex_action_21),AlexAcc (alex_action_21),AlexAcc (alex_action_21),AlexAcc (alex_action_21),AlexAcc (alex_action_21),AlexAcc (alex_action_21),AlexAcc (alex_action_21),AlexAcc (alex_action_21),AlexAcc (alex_action_22),AlexAcc (alex_action_23),AlexAcc (alex_action_23),AlexAcc (alex_action_23)]
-{-# LINE 62 "Lexer.x" #-}
+{-# LINE 62 "MiniLex.x" #-}
 
 -----------------------------------------------------------------------------
 -- Taken from Haskell.Language.TH source code then slightly modified
@@ -541,19 +541,19 @@ byteToString = chr . fromIntegral
 -----------------------------------------------------------------------------
 -- Generate an error when an unknown character is found in the input string
 -----------------------------------------------------------------------------
-unknown :: AlexInput -> Int -> Alex Token
+unknown :: AlexInput -> Int -> Alex TokenPos
 unknown (p, c, bs, s) n = myErr (p, c, bs, s) ("Unknown Character: \"" ++ (take 1 s) ++ "\"")
 
 -----------------------------------------------------------------------------
 -- Give the error message meaningful output (position of error from input)
 -----------------------------------------------------------------------------
-myErr :: AlexInput -> String -> Alex Token
+myErr :: AlexInput -> String -> Alex TokenPos
 myErr ((AlexPn p1 p2 p3), c, bs, s) mssg = error $ mssg ++ " at line " ++ (show p2) ++ ", column " ++ (show p3)
 
 -----------------------------------------------------------------------------
 -- A wrapper function to track how many opening multi-line comments need closing
 -----------------------------------------------------------------------------
-multi :: AlexInput -> Int -> Alex Token
+multi :: AlexInput -> Int -> Alex TokenPos
 multi alexIn i = do
         currentIn <- alexGetInput
         alexSetInput $ multi' currentIn 1
@@ -613,7 +613,7 @@ endLine alexIn = do
 -- This function reads the next token from the input string, and recursively
 -- does so until the EOF.
 -----------------------------------------------------------------------------
-tokens :: [Token] -> Alex [Token]
+tokens :: [TokenPos] -> Alex [TokenPos]
 tokens ts = do
         next <- alexMonadScan
         case next of
@@ -623,115 +623,89 @@ tokens ts = do
 -----------------------------------------------------------------------------
 -- The data type for lexical Tokens.
 -----------------------------------------------------------------------------
-data Token = TIF AlexPosn
-            |TTHEN AlexPosn
-            |TWHILE AlexPosn
-            |TDO AlexPosn
-            |TINPUT AlexPosn
-            |TELSE AlexPosn
-            |TBEGIN AlexPosn
-            |TEND AlexPosn
-            |TWRITE AlexPosn
-            |TID [Char] AlexPosn
-            |TNUM Int AlexPosn
-            |TADD AlexPosn
-            |TASSIGN AlexPosn
-            |TSUB AlexPosn
-            |TMUL AlexPosn
-            |TDIV AlexPosn
-            |TLPAR AlexPosn
-            |TRPAR AlexPosn
-            |TSEMICOLON AlexPosn
-            |TEOF
 
-instance Eq Token where
-    (==) (TIF p) (TIF p') = True
-    (==) (TTHEN p) (TTHEN p') = True
-    (==) (TWHILE p) (TWHILE p') = True
-    (==) (TDO p) (TDO p') = True
-    (==) (TINPUT p) (TINPUT p') = True
-    (==) (TELSE p) (TELSE p') = True
-    (==) (TBEGIN p) (TBEGIN p') = True
-    (==) (TEND p) (TEND p') = True
-    (==) (TWRITE p) (TWRITE p') = True
-    (==) (TID s p) (TID s' p') = True
-    (==) (TNUM n p) (TNUM n' p') = True
-    (==) (TADD p) (TADD p') = True
-    (==) (TASSIGN p) (TASSIGN p') = True
-    (==) (TSUB p) (TSUB p') = True
-    (==) (TMUL p) (TMUL p') = True
-    (==) (TDIV p) (TDIV p') = True
-    (==) (TLPAR p) (TLPAR p') = True
-    (==) (TRPAR p) (TRPAR p') = True
-    (==) (TSEMICOLON p) (TSEMICOLON p') = True
+data TokenPos = TUP (Token, AlexPosn)
+                |TEOF
+
+data Token = TIF 
+            |TTHEN
+            |TWHILE
+            |TDO 
+            |TINPUT 
+            |TELSE 
+            |TBEGIN 
+            |TEND 
+            |TWRITE 
+            |TID [Char] 
+            |TNUM Int 
+            |TADD 
+            |TASSIGN
+            |TSUB 
+            |TMUL 
+            |TDIV 
+            |TLPAR 
+            |TRPAR 
+            |TSEMICOLON 
+    deriving (Show, Eq)
+
 -----------------------------------------------------------------------------
 -- When showing the user the data, the position of the pattern is irrelevant,
 -- defining our own instance of Show allows us to maintain the information
 -- as it needs to be passed on to the parser eventually, without creating a 
 -- mess for debugging.
 -----------------------------------------------------------------------------
-instance Show Token where
+instance Show TokenPos where
     show tok = case tok of
-        TIF _ -> "IF"
-        TTHEN _ -> "THEN" 
-        TWHILE _ -> "WHILE"
-        TDO _ -> "DO"
-        TINPUT _ -> "INPUT"
-        TELSE _ -> "ELSE"
-        TBEGIN _ -> "BEGIN"
-        TEND _ -> "END"
-        TWRITE _ -> "WRITE"
-        TID var _ -> "ID (" ++ (show var) ++ ")"
-        TNUM n _ -> "NUM (" ++ (show n) ++ ")"
-        TADD _ -> "ADD"
-        TASSIGN _ -> "ASSIGN"
-        TSUB _ -> "SUB"
-        TMUL _ -> "MUL"
-        TDIV _ -> "DIV"
-        TLPAR _ -> "LPAR"
-        TRPAR _ -> "RPAR"
-        TSEMICOLON _ -> "SEMICOLON"
-        
+        TUP (t, p) -> show t
+
+instance Eq TokenPos where
+    (==) (TUP (t1, _)) (TUP (t2, _)) = (t1 == t2)
+
 -----------------------------------------------------------------------------
--- I honestly have no idea why Alex required us to define this ourself.
+-- I honestly have no idea why Alex required us to define this.
 -----------------------------------------------------------------------------
-alexEOF :: Alex Token
+alexEOF :: Alex TokenPos
 alexEOF = return TEOF
 
 -----------------------------------------------------------------------------
 -- The main routine of this module (when not served as a stand-alone application)
 -----------------------------------------------------------------------------
-lexer :: String -> Either String [Token]
-lexer inStr = (runAlex inStr $ tokens [])
+lexer :: String -> [TokenPos]
+lexer inStr = do
+        case (runAlex inStr $ tokens []) of
+            Right ts -> ts
+            Left mssg -> error "Lex Fail"
 
 -----------------------------------------------------------------------------
 -- Easier to read than printing out the list in-line. This prints each token
 -- on it's own individual line. (I believe, mapM_ is required due to Alex's 
 -- monad wrapper)
 -----------------------------------------------------------------------------
-pPrint :: [Token] -> IO ()
+pPrint :: [TokenPos] -> IO ()
 pPrint tokens = mapM_  (putStrLn.show) tokens
 
+
+
 alex_action_1 = multi
-alex_action_3 = \(p,_,_,_) i -> return $ TIF p
-alex_action_4 = \(p,_,_,_) i -> return $ TTHEN p
-alex_action_5 = \(p,_,_,_) i -> return $ TWHILE p
-alex_action_6 = \(p,_,_,_) i -> return $ TDO p
-alex_action_7 = \(p,_,_,_) i -> return $ TINPUT p
-alex_action_8 = \(p,_,_,_) i -> return $ TELSE p
-alex_action_9 = \(p,_,_,_) i -> return $ TBEGIN p
-alex_action_10 = \(p,_,_,_) i -> return $ TEND p
-alex_action_11 = \(p,_,_,_) i -> return $ TWRITE p
-alex_action_12 = \(p,_,_,_) i -> return $ TASSIGN p
-alex_action_13 = \(p,_,_,_) i -> return $ TADD p
-alex_action_14 = \(p,_,_,_) i -> return $ TSUB p
-alex_action_15 = \(p,_,_,_) i -> return $ TMUL p
-alex_action_16 = \(p,_,_,_) i -> return $ TDIV p
-alex_action_17 = \(p,_,_,_) i -> return $ TLPAR p
-alex_action_18 = \(p,_,_,_) i -> return $ TRPAR p
-alex_action_19 = \(p,_,_,_) i -> return $ TSEMICOLON p
-alex_action_20 = \(p,_,_,s) i -> return $ TNUM (read (take i s)) p
-alex_action_21 = \(p,_,_,s) i -> return $ TID (take i s) p
+alex_action_3 = \(p,_,_,_) i -> return $ TUP (TIF, p)
+alex_action_4 = \(p,_,_,_) i -> return $ TUP (TTHEN, p)
+alex_action_5 = \(p,_,_,_) i -> return $ TUP (TWHILE, p)
+alex_action_6 = \(p,_,_,_) i -> return $ TUP (TDO, p)
+alex_action_7 = \(p,_,_,_) i -> return $ TUP (TINPUT, p)
+alex_action_8 = \(p,_,_,_) i -> return $ TUP (TELSE, p)
+alex_action_9 = \(p,_,_,_) i -> return $ TUP (TBEGIN, p)
+alex_action_10 = \(p,_,_,_) i -> return $ TUP (TEND, p)
+alex_action_11 = \(p,_,_,_) i -> return $ TUP (TWRITE, p)
+alex_action_12 = \(p,_,_,_) i -> return $ TUP (TASSIGN, p)
+alex_action_13 = \(p,_,_,_) i -> return $ TUP (TADD, p)
+alex_action_14 = \(p,_,_,_) i -> return $ TUP (TSUB, p)
+alex_action_15 = \(p,_,_,_) i -> return $ TUP (TMUL, p)
+alex_action_16 = \(p,_,_,_) i -> return $ TUP (TDIV, p)
+alex_action_17 = \(p,_,_,_) i -> return $ TUP (TLPAR, p)
+alex_action_18 = \(p,_,_,_) i -> return $ TUP (TRPAR, p)
+alex_action_19 = \(p,_,_,_) i -> return $ TUP (TSEMICOLON, p)
+alex_action_20 = \(p,_,_,s) i -> return $ TUP (TNUM (read (take i s)), p)
+alex_action_21 = \(p,_,_,s) i -> return $ TUP (TID (take i s), p)
 alex_action_22 = \alexIn i -> myErr alexIn "Unbalanced Multiline"
 alex_action_23 = unknown
 {-# LINE 1 "templates/GenericTemplate.hs" #-}
