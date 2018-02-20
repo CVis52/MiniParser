@@ -11,6 +11,8 @@ To run individual parsing on a file run:
 
 > $./Parser \<test-file\>
 
+The output of this will print the AST to the terminal, plus the stack code will be generated and written to a file "default.txt".
+
 #### Context Free Grammar
 The original grammar provided by Dr. Cockett for the Minisculus language is neither a LL(1) grammar, nor recursive descent.
 
